@@ -11,6 +11,10 @@ function Participant(id, communicator) {
 	this.makeMove = function() {
 		return Promise.resolve('e4').delay(1000);
 	}
+
+	this.msg = function(msg) {
+		console.log(chalk.dim('MSG in ' + this.id + ": " + msg.msg))
+	}
 }
 
 module.exports = Participant;

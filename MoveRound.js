@@ -17,7 +17,7 @@ var ActionsIncluded = require('./mixins/ActionsIncluded');
 
 function MoveRound(settings) {
 	// Decorate with this.actions set to Actions object
-	ActionsIncluded.call(this);
+	ActionsIncluded.call(this, this);
 	/** Settings for the move round, not meant to be accessed by callbacks */
 	this._settings = {
 		timeout: settings.timeout || 5000,
@@ -60,13 +60,6 @@ MoveRound.prototype._start = function() {
 	this.onStart();
 
 	return this._roundOfMoves()
-	// One round of moves completed, check if loop-condition is true
-	.then(function() {
-		// If loop is on, we recurse back for another round of moves
-		if (this._settings.loop) return this._roundOfMoves();
-		// We explicitly throw EndMoveRound so we end up in the handler
-		this.actions.endMoveRound();
-	}.bind(this))
 	// We trap EndMoveRound errors here so we can call exit-handler correctly.
 	.catch(EndMoveRound, function() {
 		console.log(chalk.magenta("Action: EndMoveRound"));
@@ -92,6 +85,15 @@ MoveRound.prototype._roundOfMoves = function() {
 	console.log("Round of moves with player count: " + copyOfParticipants.length);
 	// Start the chain
 	return Promise.mapSeries(copyOfParticipants, this._askParticipantForMove.bind(this))
+	// One round of moves completed, check if loop-condition is true
+	.then(function() {
+		// If no remaining players we must end the move round!
+		if (this._participantsForTheRound.length === 0) this.actions.endMoveRound();
+		// If loop is on, we recurse back for another round of moves
+		if (this._settings.loop) return this._roundOfMoves();
+		// We explicitly throw EndMoveRound so we end up in the handler
+		this.actions.endMoveRound();
+	}.bind(this))	
 }
 /**
 * Asks Participant to make his move.
@@ -208,13 +210,14 @@ MoveRound.prototype.handleLegalMove = function() {
 	this.actions.noMoreMovesFromThisParticipant();
 }
 
-MoveRound.prototype.afterMove = function() {
+MoveRound.prototype.afterMove = function(participant) {
 	console.log(chalk.cyan("afterMove cb"))
 	this.state.counter++;
+	this.actions.broadcast({topic: 'new_world', msg: this.state.counter});
 	console.log("Moves been made: " + this.state.counter)
 }
 
-MoveRound.prototype.beforeMove = function() {
+MoveRound.prototype.beforeMove = function(participant) {
 	console.log(chalk.cyan("beforeMove cb"))
 }
 
