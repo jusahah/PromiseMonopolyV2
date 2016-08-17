@@ -4,11 +4,13 @@ var chalk = require('chalk');
 
 /** Domain exceptions */
 var IllegalMove = require('./exceptions/IllegalMove')
+var AlreadyDisconnected = require('./exceptions/AlreadyDisconnected')
 
 /** Domains actions */ 
 var EndGame = require('./actions/EndGame')
 var EndMoveRound = require('./actions/EndMoveRound')
 var RetryTurn = require('./actions/RetryTurn')
+var SkipMove  = require('./actions/SkipMove');
 var NoMoreMovesFromThisParticipant = require('./actions/NoMoreMovesFromThisParticipant');
 
 /** Mixins of MoveRound */
@@ -88,6 +90,7 @@ MoveRound.prototype._roundOfMoves = function() {
 	// One round of moves completed, check if loop-condition is true
 	.then(function() {
 		// If no remaining players we must end the move round!
+		console.log("Next round? Remaining count: " + this._participantsForTheRound.length);
 		if (this._participantsForTheRound.length === 0) this.actions.endMoveRound();
 		// If loop is on, we recurse back for another round of moves
 		if (this._settings.loop) return this._roundOfMoves();
@@ -103,6 +106,7 @@ MoveRound.prototype._roundOfMoves = function() {
 * @throws EndGame
 */
 MoveRound.prototype._askParticipantForMove = function(participant) {
+	//if (participant.hasDisconnected()) return true; // Bail instantly
 	// Run beforeMove callback
 	this.beforeMove(participant);
 	// Ask Participant for move and start the promise chain
@@ -121,7 +125,16 @@ MoveRound.prototype._askParticipantForMove = function(participant) {
 	.then(this.handleLegalMove.bind(this))
 	// Errors
 	// If Participant was too slow, we get thrown at us TimeoutError
-	.catch(Promise.TimeoutError, this.handleTimeout.bind(this))
+	.catch(Promise.TimeoutError, function() {
+		// Check if player has lost connection
+		if (participant.hasDisconnected()) {
+			console.log("DISCONNECT CAUGHT");
+			_.remove(this._participantsForTheRound, function(p) {
+				return p === participant
+			});
+		}
+		return this.handleTimeout();
+	}.bind(this))
 	// If Participant made illegal move, we get thrown at us IllegalMove
 	.catch(IllegalMove, this.handleIllegalMove.bind(this)) // Throws 'RetryTurn'
 	// Participant does not continue making moves in case the MoveRound recurses.
@@ -135,8 +148,15 @@ MoveRound.prototype._askParticipantForMove = function(participant) {
 	.catch(RetryTurn, function() {
 		// Recurse back
 		// Run onRetryTurn callback
+		console.log("RETRY TURN CATCH")
 		this.onRetryTurn();
 		return this._askParticipantForMove(participant);
+	}.bind(this))
+	// Player has already disconnected
+	.catch(AlreadyDisconnected, function() {
+		_.remove(this._participantsForTheRound, function(p) {
+			return p === participant
+		});
 	}.bind(this))
 	// Make sure afterMove callback is always run
 	.finally(this.afterMove.bind(this))
@@ -188,29 +208,43 @@ MoveRound.prototype.selectParticipantsForMoveRound = function() {
 
 // Handlers
 MoveRound.prototype.checkMoveLegality = function(move) {
+	// Callable actions: 
+	// (none)
+
 	console.log(chalk.blue('checkMoveLegality: ' + move));
 	return true;
 }
 
 MoveRound.prototype.handleTimeout = function() {
+	// Callable actions: 
+	// retryTurn, noMoreMovesFromThisParticipant, endMoveRound, endGame, broadcast
+
 	console.log(chalk.blue('handleTimeout'));
-	return false;
+
 }
 
 MoveRound.prototype.handleIllegalMove = function() {
+	// Callable actions: 
+	// retryTurn, noMoreMovesFromThisParticipant, endMoveRound, endGame, broadcast
+
 	console.log(chalk.blue('handleIllegalMove'));
 	this.actions.retryTurn();
 }
 
 MoveRound.prototype.handleLegalMove = function() {
+	// Callable actions: 
+	// retryTurn, noMoreMovesFromThisParticipant, endMoveRound, endGame, broadcast
+
 	// Mutate global state based on move
 	// If dont want to include Participant to a next recursion of MoveRound,
 	// throw "NoMoreMovesFromThisParticipant"
 	console.log(chalk.blue('handleLegalMove'));
-	this.actions.noMoreMovesFromThisParticipant();
+	//this.actions.noMoreMovesFromThisParticipant();
 }
 
 MoveRound.prototype.afterMove = function(participant) {
+	// Callable actions: 
+	// retryTurn, noMoreMovesFromThisParticipant, endMoveRound, endGame, broadcast
 	console.log(chalk.cyan("afterMove cb"))
 	this.state.counter++;
 	this.actions.broadcast({topic: 'new_world', msg: this.state.counter});
@@ -218,6 +252,8 @@ MoveRound.prototype.afterMove = function(participant) {
 }
 
 MoveRound.prototype.beforeMove = function(participant) {
+	// Callable actions: 
+	// skipMove, endMoveRound, endGame, broadcast
 	console.log(chalk.cyan("beforeMove cb"))
 }
 

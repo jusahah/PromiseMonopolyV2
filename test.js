@@ -1,9 +1,9 @@
 var Participant = require('./Participant');
 var MoveRound   = require('./MoveRound');
 
-var mr = new MoveRound({timeout: 2000, loop: true})
+var mr = new MoveRound({timeout: 3500, loop: true})
 
-var players = [new Participant('A', {}), new Participant('B', {})];
+var players = [new Participant('A', {}), new Participant('B', {}), new Participant('C', {})];
 
 mr._initialize({
 	allPlayers: players,
