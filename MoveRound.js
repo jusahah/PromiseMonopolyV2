@@ -108,9 +108,14 @@ MoveRound.prototype._roundOfMoves = function() {
 MoveRound.prototype._askParticipantForMove = function(participant) {
 	//if (participant.hasDisconnected()) return true; // Bail instantly
 	// Run beforeMove callback
-	this.beforeMove(participant);
+	
 	// Ask Participant for move and start the promise chain
-	return participant.makeMove().timeout(this._settings.timeout)
+	return Promise.try(function() {
+		return this.beforeMove(participant);
+	}.bind(this))
+	.then(function() {
+		return participant.makeMove().timeout(this._settings.timeout)
+	}.bind(this))
 	// Check if legal move -> throws 'IllegalMove' if not
 	.tap(function(move) {
 		return Promise.try(function() {
@@ -135,6 +140,10 @@ MoveRound.prototype._askParticipantForMove = function(participant) {
 		}
 		return this.handleTimeout();
 	}.bind(this))
+	// Move was skipped by user code
+	.catch(SkipMove, function() {
+		// Do pretty much nothing
+	})
 	// If Participant made illegal move, we get thrown at us IllegalMove
 	.catch(IllegalMove, this.handleIllegalMove.bind(this)) // Throws 'RetryTurn'
 	// Participant does not continue making moves in case the MoveRound recurses.
@@ -238,6 +247,7 @@ MoveRound.prototype.handleLegalMove = function() {
 	// Mutate global state based on move
 	// If dont want to include Participant to a next recursion of MoveRound,
 	// throw "NoMoreMovesFromThisParticipant"
+	this.state.counter++;
 	console.log(chalk.blue('handleLegalMove'));
 	//this.actions.noMoreMovesFromThisParticipant();
 }
@@ -246,7 +256,7 @@ MoveRound.prototype.afterMove = function(participant) {
 	// Callable actions: 
 	// retryTurn, noMoreMovesFromThisParticipant, endMoveRound, endGame, broadcast
 	console.log(chalk.cyan("afterMove cb"))
-	this.state.counter++;
+	
 	this.actions.broadcast({topic: 'new_world', msg: this.state.counter});
 	console.log("Moves been made: " + this.state.counter)
 }
@@ -255,6 +265,20 @@ MoveRound.prototype.beforeMove = function(participant) {
 	// Callable actions: 
 	// skipMove, endMoveRound, endGame, broadcast
 	console.log(chalk.cyan("beforeMove cb"))
+
+	if (Math.random() < 0.4) {
+		console.log("Skipping move!!!!")
+		this.actions.skipMove();
+	}
 }
 
 module.exports = MoveRound;
+
+
+// NEXT:
+
+// Phases ( which call MoveRounds)
+// Game container
+// Communicator connected to frontend
+// Chess Swiss-tournament implementation
+// Thats about it.
