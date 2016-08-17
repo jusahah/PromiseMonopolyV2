@@ -1,0 +1,19 @@
+{
+  "name": "promiseplay_v5",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jussi Hämäläinen <jussiahamalainen@gmail.com> (http://www.nollaversio.fi)",
+  "license": "ISC",
+  "dependencies": {
+    "bluebird": "^3.4.1",
+    "lodash": "^4.15.0",
+    "node-uuid": "^1.4.7"
+  },
+  "devDependencies": {
+    "chalk": "^1.1.3"
+  }
+}
