@@ -9,6 +9,7 @@ var IllegalMove = require('./exceptions/IllegalMove')
 var EndGame = require('./actions/EndGame')
 var EndMoveRound = require('./actions/EndMoveRound')
 var RetryTurn = require('./actions/RetryTurn')
+var NoMoreMovesFromThisParticipant = require('./actions/NoMoreMovesFromThisParticipant');
 
 /** Mixins of MoveRound */
 var ActionsIncluded = require('./mixins/ActionsIncluded');
@@ -16,7 +17,7 @@ var ActionsIncluded = require('./mixins/ActionsIncluded');
 
 function MoveRound(settings) {
 	// Decorate with this.actions set to Actions object
-	ActionsIncluded.call(null, this);
+	ActionsIncluded.call(this);
 	/** Settings for the move round, not meant to be accessed by callbacks */
 	this._settings = {
 		timeout: settings.timeout || 5000,
@@ -68,7 +69,7 @@ MoveRound.prototype._start = function() {
 	}.bind(this))
 	// We trap EndMoveRound errors here so we can call exit-handler correctly.
 	.catch(EndMoveRound, function() {
-		console.log(chalk.red("Action: EndMoveRound"));
+		console.log(chalk.magenta("Action: EndMoveRound"));
 	})
 	.finally(this._exit.bind(this));
 
@@ -88,6 +89,7 @@ MoveRound.prototype._roundOfMoves = function() {
 	this.onRoundOfMoves();
 	// Make a copy of remaining Participant because we modify original during promise chain
 	var copyOfParticipants = _.slice(this._participantsForTheRound);
+	console.log("Round of moves with player count: " + copyOfParticipants.length);
 	// Start the chain
 	return Promise.mapSeries(copyOfParticipants, this._askParticipantForMove.bind(this))
 }
@@ -104,7 +106,15 @@ MoveRound.prototype._askParticipantForMove = function(participant) {
 	// Ask Participant for move and start the promise chain
 	return participant.makeMove().timeout(this._settings.timeout)
 	// Check if legal move -> throws 'IllegalMove' if not
-	.tap(this.checkMoveLegality.bind(this))
+	.tap(function(move) {
+		return Promise.try(function() {
+			return this.checkMoveLegality(move);
+		}.bind(this))
+		.then(function(isLegal) {
+			// If not legal, raise 'IllegalMove', somebody will catch it down the drain.
+			if (!isLegal) throw new IllegalMove(); 
+		}.bind(this))
+	}.bind(this))
 	// Was legal, mutate state based on move
 	.then(this.handleLegalMove.bind(this))
 	// Errors
@@ -170,14 +180,23 @@ MoveRound.prototype.onRetryTurn = function() {
 MoveRound.prototype.selectParticipantsForMoveRound = function() {
 	console.log(chalk.green("selectParticipantsForMoveRound cb"))
 
+	return _.slice(this.state.playersRemaining);
+
 }
 
 // Handlers
+MoveRound.prototype.checkMoveLegality = function(move) {
+	console.log(chalk.blue('checkMoveLegality: ' + move));
+	return true;
+}
+
 MoveRound.prototype.handleTimeout = function() {
+	console.log(chalk.blue('handleTimeout'));
 	return false;
 }
 
 MoveRound.prototype.handleIllegalMove = function() {
+	console.log(chalk.blue('handleIllegalMove'));
 	this.actions.retryTurn();
 }
 
@@ -185,12 +204,14 @@ MoveRound.prototype.handleLegalMove = function() {
 	// Mutate global state based on move
 	// If dont want to include Participant to a next recursion of MoveRound,
 	// throw "NoMoreMovesFromThisParticipant"
-
+	console.log(chalk.blue('handleLegalMove'));
 	this.actions.noMoreMovesFromThisParticipant();
 }
 
 MoveRound.prototype.afterMove = function() {
 	console.log(chalk.cyan("afterMove cb"))
+	this.state.counter++;
+	console.log("Moves been made: " + this.state.counter)
 }
 
 MoveRound.prototype.beforeMove = function() {

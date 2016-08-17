@@ -4,7 +4,7 @@ var MoveRound   = require('./MoveRound');
 var mr = new MoveRound({})
 
 mr._initialize({
-	playersRemaining: [new Participant('A', {}, new Participant('B', {}))],
+	playersRemaining: [new Participant('A', {}), new Participant('B', {})],
 	counter: 0
 })
 
