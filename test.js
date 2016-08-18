@@ -1,9 +1,16 @@
 var Participant = require('./Participant');
 var MoveRound   = require('./MoveRound');
-
-var mr = new MoveRound({timeout: 3500, loop: true})
+var Transition  = require('./Transition');
+var Runner      = require('./Runner');
+var Game        = require('./Game'); 
 
 var players = [new Participant('A', {}), new Participant('B', {}), new Participant('C', {})];
+
+/*
+
+// MOVEROUND
+
+var mr = new MoveRound({timeout: 3500, loop: true})
 
 mr._initialize({
 	allPlayers: players,
@@ -14,4 +21,65 @@ mr._initialize({
 mr._start()
 .then(function() {
 	console.log("Move Round ended");
+})
+
+// TRANSITION
+
+var tr = new Transition({delay: 4500, loop: true})
+
+tr._initialize({
+	allPlayers: players
+});
+
+tr._start()
+.then(function() {
+	console.log("Transition completed");
+})
+*/
+
+/*
+// RUNNER
+
+var runner = new Runner({loop: false});
+
+runner._initialize({
+	allPlayers: players
+}, [
+	new MoveRound({timeout: 3500, loop: false}),
+	new Transition({delay: 1500, loop: false}),
+	new MoveRound({timeout: 3500, loop: false}),
+	new Transition({delay: 5500, loop: false})
+]);
+
+runner._start()
+.then(function() {
+	console.log("RUNNER FINISHED");
+})
+
+*/
+
+var game = new Game(players, {counter: 0}, [
+
+	new Runner({name: 'upper_level', loop: true}, [
+
+		new Transition({name: 'start_transition', delay: 500, loop: false}),
+
+		new Runner({name: 'run1', loop: false}, [
+			new MoveRound({timeout: 3500, loop: false}),
+			new Transition({name: 'run1_1', delay: 4500, loop: false}),
+			new MoveRound({timeout: 3500, loop: false}),
+			new Transition({name: 'run1_2', delay: 5500, loop: false})
+		]),
+
+		new Runner({name: 'run2', loop: false}, [
+			new Transition({name: 'run2_1', delay: 500, loop: false}),
+			new Transition({name: 'run2_2', delay: 2500, loop: false}),
+			new MoveRound({timeout: 3500, loop: false})
+		])
+	])
+])
+
+game._start()
+.then(function() {
+	console.log("Game ended");
 })

@@ -1,4 +1,4 @@
-module.exports = function EndMoveRound(message, extra) {
+module.exports = function EndTransition(message, extra) {
   Error.captureStackTrace(this, this.constructor);
   this.name = this.constructor.name;
   this.message = message;

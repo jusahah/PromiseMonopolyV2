@@ -63,7 +63,7 @@ MoveRound.prototype._start = function() {
 
 	return this._roundOfMoves()
 	// We trap EndMoveRound errors here so we can call exit-handler correctly.
-	.catch(EndMoveRound, function() {
+	.catch(EndMoveRound, function(endMoveRound) {
 		console.log(chalk.magenta("Action: EndMoveRound"));
 	})
 	.finally(this._exit.bind(this));
@@ -211,7 +211,7 @@ MoveRound.prototype.onRetryTurn = function() {
 MoveRound.prototype.selectParticipantsForMoveRound = function() {
 	console.log(chalk.green("selectParticipantsForMoveRound cb"))
 
-	return _.slice(this.state.playersRemaining);
+	return _.slice(this.state.allPlayers);
 
 }
 
@@ -266,7 +266,7 @@ MoveRound.prototype.beforeMove = function(participant) {
 	// skipMove, endMoveRound, endGame, broadcast
 	console.log(chalk.cyan("beforeMove cb"))
 
-	if (Math.random() < 0.4) {
+	if (Math.random() < 0.1) {
 		console.log("Skipping move!!!!")
 		this.actions.skipMove();
 	}

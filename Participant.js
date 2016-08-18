@@ -39,7 +39,9 @@ function Participant(id, communicator) {
 	}
 
 	this.msg = function(msg) {
-		console.log(chalk.dim('MSG in ' + this.id + ": " + msg.msg))
+		var text = this.id + ': ' + msg.msg;
+		console.log(consoleColorers[this.id](text));
+		//console.log(chalk.dim('MSG in ' + this.id + ": " + msg.msg))
 	}
 
 	this.hasDisconnected = function() {
@@ -47,6 +49,7 @@ function Participant(id, communicator) {
 	}
 
 	setTimeout(function() {
+		//return; // Disable by uncommenting
 		console.log("--- DISCONNECT " + this.id + " ---");
 		this.disconnected = true;
 	}.bind(this), disconnectTimes[this.id]);
