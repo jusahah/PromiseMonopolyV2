@@ -4,6 +4,8 @@ var Transition  = require('./Transition');
 var Runner      = require('./Runner');
 var Game        = require('./Game'); 
 
+var recursiveLog = require('./utils/recursiveLog');
+
 var players = [new Participant('A', {}), new Participant('B', {}), new Participant('C', {})];
 
 /*
@@ -60,15 +62,15 @@ runner._start()
 
 var game = new Game(players, {counter: 0}, [
 
-	new Runner({name: 'upper_level', loop: true}, [
+	new Runner({name: 'upper_level', loop: false}, [
 
 		new Transition({name: 'start_transition', delay: 500, loop: false}),
 
 		new Runner({name: 'run1', loop: false}, [
 			new MoveRound({timeout: 3500, loop: false}),
-			new Transition({name: 'run1_1', delay: 4500, loop: false}),
+			new Transition({name: 'run1_1', delay: 2500, loop: false}),
 			new MoveRound({timeout: 3500, loop: false}),
-			new Transition({name: 'run1_2', delay: 5500, loop: false})
+			new Transition({name: 'run1_2', delay: 1500, loop: false})
 		]),
 
 		new Runner({name: 'run2', loop: false}, [
@@ -82,4 +84,5 @@ var game = new Game(players, {counter: 0}, [
 game._start()
 .then(function() {
 	console.log("Game ended");
+	recursiveLog.printTrace();
 })

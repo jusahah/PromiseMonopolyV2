@@ -2,6 +2,8 @@ var Promise = require('bluebird');
 var _ = require('lodash');
 var chalk = require('chalk');
 
+var recursiveLog = require('./utils/recursiveLog');
+
 /** Domain exceptions */
 
 /** Domains actions */ 
@@ -102,6 +104,8 @@ Runner.prototype.onPhaseEnd= function() {
 }
 
 Runner.prototype.onEnter = function() {
+	recursiveLog.log("RUNNER " + this._settings.name + ": onEnter ")
+	recursiveLog.push();
 	console.log(chalk.bgBlack("----------------"));
 
 	console.log(chalk.bgBlack.green("RUNNER " + this._settings.name + ": onEnter cb"));
@@ -116,6 +120,8 @@ Runner.prototype.onStart = function() {
 }
 
 Runner.prototype.onExit = function() {
+	recursiveLog.pop();
+	recursiveLog.log("RUNNER " + this._settings.name + ": onExit ")
 	console.log(chalk.bgBlack("----------------"));
 
 	console.log(chalk.bgBlack.red("RUNNER " + this._settings.name + ": onExit cb"));

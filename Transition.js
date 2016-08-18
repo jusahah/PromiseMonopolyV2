@@ -82,6 +82,8 @@ Transition.prototype._exit = function() {
 }
 
 Transition.prototype.onEnter = function() {
+	recursiveLog.log("TRANSITION " + this._settings.name + ": onEnter ")
+	recursiveLog.push();
 	console.log(chalk.bgWhite.green("TRANSITION " + this._settings.name + ": onEnter cb"));
 	this.actions.broadcast({topic: 'transition', msg: 'Transiting to new app state'});
 }
@@ -92,6 +94,8 @@ Transition.prototype.onStart = function() {
 }
 
 Transition.prototype.onExit = function() {
+	recursiveLog.pop();
+	recursiveLog.log("TRANSITION " + this._settings.name + ": onExit ")
 	console.log(chalk.bgWhite.red("TRANSITION " + this._settings.name + ": onExit cb"));
 }
 

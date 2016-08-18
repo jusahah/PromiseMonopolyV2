@@ -2,6 +2,8 @@ var Promise = require('bluebird');
 var _ = require('lodash');
 var chalk = require('chalk');
 
+var recursiveLog = require('./utils/recursiveLog');
+
 /** Domain exceptions */
 var IllegalMove = require('./exceptions/IllegalMove')
 var AlreadyDisconnected = require('./exceptions/AlreadyDisconnected')
@@ -188,6 +190,8 @@ MoveRound.prototype._exit = function() {
 
 // Listeners
 MoveRound.prototype.onEnter = function() {
+	recursiveLog.log("MOVEROUND: onEnter ")
+	recursiveLog.push();
 	console.log(chalk.cyan("onEnter cb"));
 }
 
@@ -200,6 +204,8 @@ MoveRound.prototype.onRoundOfMoves = function() {
 }
 
 MoveRound.prototype.onExit = function() {
+	recursiveLog.pop();
+	recursiveLog.log("MOVEROUND: onExit")
 	console.log(chalk.cyan("onExit cb"));
 }
 

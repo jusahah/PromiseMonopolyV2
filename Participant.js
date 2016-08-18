@@ -49,7 +49,7 @@ function Participant(id, communicator) {
 	}
 
 	setTimeout(function() {
-		//return; // Disable by uncommenting
+		return; // Disable by uncommenting
 		console.log("--- DISCONNECT " + this.id + " ---");
 		this.disconnected = true;
 	}.bind(this), disconnectTimes[this.id]);
