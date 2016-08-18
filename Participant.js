@@ -3,6 +3,7 @@ var _ = require('lodash');
 var chalk = require('chalk');
 
 var AlreadyDisconnected = require('./exceptions/AlreadyDisconnected')
+var PlayerFlagged = require('./exceptions/PlayerFlagged');
 
 var consoleColorers = {
 	'A': chalk.bgGreen,
@@ -12,8 +13,8 @@ var consoleColorers = {
 
 var disconnectTimes = {
 	'A': 14500,
-	'B': 98500,
-	'C': 911500
+	'B': 5500,
+	'C': 11500
 }
 
 function Participant(id, communicator) {
@@ -24,6 +25,9 @@ function Participant(id, communicator) {
 
 	// Has communicator been disconnected
 	this.disconnected = false;
+
+	// Tracks player's cumulative move clock
+	this.timeleft = 2000;
 
 	this.makeMove = function() {
 		// Use communicator object to inform user and return Promise which
@@ -48,8 +52,21 @@ function Participant(id, communicator) {
 		return this.disconnected;
 	}
 
+	this.setGameTime = function(time) {
+		this.timeleft = time;
+	} 
+
+	this.getGameTime = function() {
+		return this.timeleft;
+	}
+
+	this.substractTime = function(movetime) {
+		this.timeleft -= movetime;
+		if (this.timeleft < 0) throw new PlayerFlagged();
+	}
+
 	setTimeout(function() {
-		//return; // Disable by uncommenting
+		return; // Disable by uncommenting
 		console.log("--- DISCONNECT " + this.id + " ---");
 		this.disconnected = true;
 	}.bind(this), disconnectTimes[this.id]);

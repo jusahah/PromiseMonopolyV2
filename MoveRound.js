@@ -7,6 +7,7 @@ var recursiveLog = require('./utils/recursiveLog');
 /** Domain exceptions */
 var IllegalMove = require('./exceptions/IllegalMove')
 var AlreadyDisconnected = require('./exceptions/AlreadyDisconnected')
+var PlayerFlagged = require('./exceptions/PlayerFlagged');
 
 /** Domains actions */ 
 var EndGame = require('./actions/EndGame')
@@ -40,6 +41,12 @@ function MoveRound(settings) {
 
 
 }
+
+MoveRound.prototype.getName = function() {
+	return 'moveround';
+}
+
+
 /**
 * Initialize move round with parent state
 *
@@ -109,17 +116,27 @@ MoveRound.prototype._roundOfMoves = function() {
 */
 MoveRound.prototype._askParticipantForMove = function(participant) {
 	//if (participant.hasDisconnected()) return true; // Bail instantly
-	// Run beforeMove callback
+	
+	// Track player move time
+	var moveRequestSent;
 	
 	// Ask Participant for move and start the promise chain
 	return Promise.try(function() {
+		// Run beforeMove callback
 		return this.beforeMove(participant);
 	}.bind(this))
 	.then(function() {
+		moveRequestSent = Date.now();
 		return participant.makeMove().timeout(this._settings.timeout)
 	}.bind(this))
 	// Check if legal move -> throws 'IllegalMove' if not
+	.tap(function() {
+		var moveTime = Date.now() - moveRequestSent;
+		console.log(chalk.red("MOVETIME WAS: " + moveTime))
+		participant.substractTime(moveTime); // Throws 'PlayerFlagged' if player oversteps time.
+	})
 	.tap(function(move) {
+
 		return Promise.try(function() {
 			return this.checkMoveLegality(move);
 		}.bind(this))
@@ -142,6 +159,8 @@ MoveRound.prototype._askParticipantForMove = function(participant) {
 		}
 		return this.handleTimeout();
 	}.bind(this))
+	// Catch player running out of cumulative clock
+	.catch(PlayerFlagged, this.handleFlagFall.bind(this))
 	// Move was skipped by user code
 	.catch(SkipMove, function() {
 		// Do pretty much nothing
@@ -256,6 +275,11 @@ MoveRound.prototype.handleLegalMove = function() {
 	this.state.counter++;
 	console.log(chalk.blue('handleLegalMove'));
 	//this.actions.noMoreMovesFromThisParticipant();
+}
+
+MoveRound.prototype.handleFlagFall = function() {
+	console.log("HANDLE FLAG FALL");
+	this.actions.endGame();
 }
 
 MoveRound.prototype.afterMove = function(participant) {

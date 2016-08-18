@@ -66,12 +66,12 @@ var game = new Game(players, {counter: 0}, [
 
 		//new Transition({name: 'start_transition', delay: 500, loop: false}),
 
-		new Runner({name: 'run1', loop: true}, [
-			new MoveRound({timeout: 3500, loop: false}),
-			new MoveRound({timeout: 3500, loop: false}),
+		new Runner({name: 'run1', loop: false}, [
 			new Runner({name: 'run1_sub', loop: false}, [
 				new Transition({name: 'run1sub_1', delay: 1500, loop: false}),
-				new Transition({name: 'run1sub_1', delay: 1500, loop: false})
+				new MoveRound({timeout: 3500, loop: false}),
+				new Transition({name: 'run1sub_2', delay: 1500, loop: false}),
+				new MoveRound({timeout: 3500, loop: false}),
 			]),
 		]),
 

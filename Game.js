@@ -31,6 +31,10 @@ function Game(players, initialWorld, phases) {
 
 }
 
+Game.prototype.getName = function() {
+	return 'Game';
+}
+
 /**
 * Start a game
 *
@@ -62,11 +66,11 @@ Game.prototype._runPhases = function() {
 
 Game.prototype._runPhase = function(phase) {
 	return Promise.try(function() {
-		this.onPhaseStart();
+		this.onPhaseStart(phase.getName());
 		phase._initialize(this.state);
 		return phase._start();
 	}.bind(this))
-	.finally(this.onPhaseEnd.bind(this));
+	.finally(this.onPhaseEnd.bind(this, phase.getName()));
 }
 
 /**
@@ -79,13 +83,13 @@ Game.prototype._exit = function() {
 	return this.onExit();
 }
 
-Game.prototype.onPhaseStart = function() {
-	console.log(chalk.magenta("GAME: onPhaseStart cb"));
+Game.prototype.onPhaseStart = function(phaseName) {
+	console.log(chalk.magenta("GAME: onPhaseStart cb for " + phaseName));
 }
 
-Game.prototype.onPhaseEnd= function() {
+Game.prototype.onPhaseEnd= function(phaseName) {
 	//this.actions.endGame();
-	console.log(chalk.magenta("GAME: onPhaseEnd cb"));
+	console.log(chalk.magenta("GAME: onPhaseEnd cb for " + phaseName));
 }
 
 Game.prototype.onEnter = function() {

@@ -29,6 +29,10 @@ function Runner(settings, phases) {
 	this._phases = phases;
 }
 
+Runner.prototype.getName = function() {
+	return this._settings.name;
+}
+
 /**
 * Initialize transition with parent state
 *
@@ -75,11 +79,11 @@ Runner.prototype._oneRunnerRound = function() {
 
 Runner.prototype._runPhase = function(phase) {
 	return Promise.try(function() {
-		this.onPhaseStart();
+		this.onPhaseStart(phase.getName());
 		phase._initialize(this.state);
 		return phase._start();
 	}.bind(this))
-	.finally(this.onPhaseEnd.bind(this));
+	.finally(this.onPhaseEnd.bind(this, phase.getName()));
 }
 
 /**
@@ -93,12 +97,12 @@ Runner.prototype._exit = function() {
 	return this.onExit();
 }
 
-Runner.prototype.onPhaseStart = function() {
-	console.log(chalk.magenta("RUNNER: onPhaseStart cb"));
+Runner.prototype.onPhaseStart = function(phaseName) {
+	console.log(chalk.magenta("RUNNER: onPhaseStart cb " + phaseName));
 }
 
-Runner.prototype.onPhaseEnd= function() {
-	console.log(chalk.magenta("RUNNER: onPhaseEnd cb"));
+Runner.prototype.onPhaseEnd= function(phaseName) {
+	console.log(chalk.magenta("RUNNER: onPhaseEnd cb " + phaseName));
 	//this.actions.endGame();
 	
 }

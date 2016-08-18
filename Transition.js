@@ -29,6 +29,10 @@ function Transition(settings) {
 	this.state = null;
 }
 
+Transition.prototype.getName = function() {
+	return this._settings.name;
+}
+
 /**
 * Initialize transition with parent state
 *
