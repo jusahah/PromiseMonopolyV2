@@ -11,9 +11,9 @@ var consoleColorers = {
 }
 
 var disconnectTimes = {
-	'A': 4500,
-	'B': 8500,
-	'C': 11500
+	'A': 14500,
+	'B': 98500,
+	'C': 911500
 }
 
 function Participant(id, communicator) {
@@ -49,7 +49,7 @@ function Participant(id, communicator) {
 	}
 
 	setTimeout(function() {
-		return; // Disable by uncommenting
+		//return; // Disable by uncommenting
 		console.log("--- DISCONNECT " + this.id + " ---");
 		this.disconnected = true;
 	}.bind(this), disconnectTimes[this.id]);

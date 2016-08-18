@@ -97,6 +97,9 @@ Transition.prototype.onExit = function() {
 	recursiveLog.pop();
 	recursiveLog.log("TRANSITION " + this._settings.name + ": onExit ")
 	console.log(chalk.bgWhite.red("TRANSITION " + this._settings.name + ": onExit cb"));
+
+	// Test whether ending game from Transition succeeds
+	if (this.state.counter > 16) this.actions.endGame();
 }
 
 
