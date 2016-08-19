@@ -127,7 +127,25 @@ MoveRound.prototype._askParticipantForMove = function(participant) {
 	}.bind(this))
 	.then(function() {
 		moveRequestSent = Date.now();
-		return participant.makeMove().timeout(this._settings.timeout)
+		return participant.makeMove()
+		// Game-specific timeout
+		.timeout(participant.getGameTime())
+		// Translate TimeoutError -> PlayerFlagged
+		.catchThrow(Promise.TimeoutError, new PlayerFlagged())		
+		// Move-specific timeout
+		.timeout(this._settings.timeout)
+
+		/*
+		.tap(function() {
+			console.log("SETTING PLAYER FLAG FALL TIMEOUT: " + participant.getGameTime());
+			return Promise.timeout(participant.getGameTime())
+			.catch(Promise.TimeoutError, function() {
+				console.log("PLAYER FLAG FELL BEFORE MOVE: " + participant.id);
+				// We have to translate this one into PlayerFlagged exception
+				throw new PlayerFlagged();
+			})
+		}.bind(this))
+		*/
 	}.bind(this))
 	// Check if legal move -> throws 'IllegalMove' if not
 	.tap(function() {
@@ -189,7 +207,7 @@ MoveRound.prototype._askParticipantForMove = function(participant) {
 		});
 	}.bind(this))
 	// Make sure afterMove callback is always run
-	.finally(this.afterMove.bind(this))
+	.finally(this.afterMove.bind(this, participant))
 
 }
 
@@ -286,7 +304,8 @@ MoveRound.prototype.afterMove = function(participant) {
 	// Callable actions: 
 	// retryTurn, noMoreMovesFromThisParticipant, endMoveRound, endGame, broadcast
 	console.log(chalk.cyan("afterMove cb"))
-	
+
+	participant.msg({topic: 'timeleft', msg: participant.getGameTime()});
 	this.actions.broadcast({topic: 'new_world', msg: this.state.counter});
 	console.log("Moves been made: " + this.state.counter)
 }
@@ -296,7 +315,7 @@ MoveRound.prototype.beforeMove = function(participant) {
 	// skipMove, endMoveRound, endGame, broadcast
 	console.log(chalk.cyan("beforeMove cb"))
 
-	if (Math.random() < 0.1) {
+	if (Math.random() < 0.0001) {
 		console.log("Skipping move!!!!")
 		this.actions.skipMove();
 	}

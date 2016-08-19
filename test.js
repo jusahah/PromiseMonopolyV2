@@ -59,7 +59,7 @@ runner._start()
 })
 
 */
-
+/*
 var game = new Game(players, {counter: 0}, [
 
 	new Runner({name: 'upper_level', loop: true}, [
@@ -80,6 +80,12 @@ var game = new Game(players, {counter: 0}, [
 
 		])
 	])
+])
+*/
+
+var game = new Game(players, {counter: 0}, [
+
+	new MoveRound({timeout: 5500, loop: true}),
 ])
 
 game._start()

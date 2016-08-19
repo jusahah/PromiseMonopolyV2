@@ -27,7 +27,7 @@ function Participant(id, communicator) {
 	this.disconnected = false;
 
 	// Tracks player's cumulative move clock
-	this.timeleft = 2000;
+	this.timeleft = 4200;
 
 	this.makeMove = function() {
 		// Use communicator object to inform user and return Promise which
@@ -39,7 +39,7 @@ function Participant(id, communicator) {
 		}
 		var text = this.id + ' to MOVE';
 		console.log(consoleColorers[this.id](text));
-		return Promise.resolve('e4').delay(300 + Math.random()*350);
+		return Promise.resolve('e4').delay(4000 + Math.random()*50);
 	}
 
 	this.msg = function(msg) {
@@ -62,7 +62,10 @@ function Participant(id, communicator) {
 
 	this.substractTime = function(movetime) {
 		this.timeleft -= movetime;
-		if (this.timeleft < 0) throw new PlayerFlagged();
+		if (this.timeleft <= 0) {
+			this.timeleft = 0;
+			throw new PlayerFlagged();
+		}
 	}
 
 	setTimeout(function() {
