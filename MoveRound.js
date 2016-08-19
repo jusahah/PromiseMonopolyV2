@@ -127,25 +127,15 @@ MoveRound.prototype._askParticipantForMove = function(participant) {
 	}.bind(this))
 	.then(function() {
 		moveRequestSent = Date.now();
+		// THIS IS GENIUS STUFF!
 		return participant.makeMove()
 		// Game-specific timeout
 		.timeout(participant.getGameTime())
-		// Translate TimeoutError -> PlayerFlagged
+		// Translate(!) TimeoutError -> PlayerFlagged
+		// Must be caught here before move-specific timeout handling!
 		.catchThrow(Promise.TimeoutError, new PlayerFlagged())		
 		// Move-specific timeout
 		.timeout(this._settings.timeout)
-
-		/*
-		.tap(function() {
-			console.log("SETTING PLAYER FLAG FALL TIMEOUT: " + participant.getGameTime());
-			return Promise.timeout(participant.getGameTime())
-			.catch(Promise.TimeoutError, function() {
-				console.log("PLAYER FLAG FELL BEFORE MOVE: " + participant.id);
-				// We have to translate this one into PlayerFlagged exception
-				throw new PlayerFlagged();
-			})
-		}.bind(this))
-		*/
 	}.bind(this))
 	// Check if legal move -> throws 'IllegalMove' if not
 	.tap(function() {
