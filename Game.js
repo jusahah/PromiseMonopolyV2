@@ -11,7 +11,7 @@ var EndGame = require('./actions/EndGame')
 var GameActionsIncluded = require('./mixins/GameActionsIncluded');
 
 
-function Game(players, initialWorld, phases) {
+function Game(phases) {
 	// Which actions are available to call from Runner callbacks
 	GameActionsIncluded.call(this, this);
 	/** Settings for the transition, not meant to be accessed by callbacks */
@@ -21,7 +21,15 @@ function Game(players, initialWorld, phases) {
 	*/
 	this.state = {};
 	// Set initial state
-	_.assign(this.state, initialWorld, {allPlayers: players})
+
+	this._startingPlayers = [];
+
+	/**
+	* Is registration open or closed
+	*
+	*/
+	this.gameHasStarted = false;
+	
 
 	/**
 	* Phases of the Game
@@ -35,6 +43,42 @@ Game.prototype.getName = function() {
 	return 'Game';
 }
 
+Game.prototype.start = function() {
+	return this._start();
+}
+
+Game.prototype.cancelGame = function() {
+	// Inform all players
+	_.each(this._startingPlayers, function(player) {
+		player.gameCancelled(this);
+	}.bind(this));
+	// Empty players array
+	this._startingPlayers = [];
+
+}
+
+Game.prototype.registerPlayer = function(player) {
+	if (player.registerToGame(this)) {
+		// Player is available for registering
+		this.onRegistration(player);
+		this._startingPlayers.push(player);
+	} 
+}
+
+Game.prototype.register = function(players) {
+	if (!this.gameHasStarted) {
+		console.log("Registering players: " + players.length);
+		_.each(players, this.registerPlayer.bind(this));
+	}
+	return this;
+}
+
+Game.prototype.initialWorld = function(world) {
+	_.assign(this.state, world);
+	return this;
+}
+
+
 /**
 * Start a game
 *
@@ -42,15 +86,20 @@ Game.prototype.getName = function() {
 */
 Game.prototype._start = function() {
 
+	this.gameHasStarted = true;
+
+	// Add players to a state object
+	this.state.allPlayers = this._startingPlayers;
+
 	// Run onEnter callback
 	this.onEnter();
 	
 	return this._runPhases()
+	// This catch is always run! There is no way to sidestep it.
 	.catch(EndGame, function() {
 		console.log("END GAME CAUGHT")
-	})
-	// Run onExit callback
-	.finally(this._exit.bind(this));
+		return this._exit();
+	}.bind(this))
 
 }
 
@@ -60,7 +109,9 @@ Game.prototype._runPhases = function() {
 		return this.onStart();
 	}.bind(this))
 	.return(this._phases)
-	.mapSeries(this._runPhase.bind(this));
+	.mapSeries(this._runPhase.bind(this))
+	// Make sure we always throw EndGame from here up
+	.throw(new EndGame())
 		
 }
 
@@ -71,6 +122,11 @@ Game.prototype._runPhase = function(phase) {
 		return phase._start();
 	}.bind(this))
 	.finally(this.onPhaseEnd.bind(this, phase.getName()));
+}
+
+Game.prototype.onRegistration = function(player) {
+	// Throws: 'RejectRegistration', 'AcceptAndStartGame'
+	console.log(chalk.magenta("GAME: onRegistration cb"));
 }
 
 /**
@@ -109,6 +165,8 @@ Game.prototype.onExit = function() {
 	console.log(chalk.bgBlack("----------------"));
 	console.log(chalk.bgBlack.red("GAME: onExit cb"));
 	console.log(chalk.bgBlack("----------------"));
+	// Return value from here will be passed into caller as 'results' variable!
+	return this.state.counter;
 
 }
 

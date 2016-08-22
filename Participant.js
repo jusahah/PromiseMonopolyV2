@@ -8,13 +8,17 @@ var PlayerFlagged = require('./exceptions/PlayerFlagged');
 var consoleColorers = {
 	'A': chalk.bgGreen,
 	'B': chalk.bgYellow,
-	'C': chalk.bgBlue
+	'C': chalk.bgBlue,
+	'D': chalk.bgMagenta,
+	'E': chalk.bgRed,
+	'F': chalk.bgBlack
 }
 
 var disconnectTimes = {
 	'A': 14500,
 	'B': 5500,
-	'C': 11500
+	'C': 11500,
+	'D': 12800
 }
 
 function Participant(id, communicator) {
@@ -27,7 +31,10 @@ function Participant(id, communicator) {
 	this.disconnected = false;
 
 	// Tracks player's cumulative move clock
-	this.timeleft = 4200;
+	this.timeleft = 3500;
+
+	// Tracks whether player is playing or not
+	this.game;
 
 	this.makeMove = function() {
 		// Use communicator object to inform user and return Promise which
@@ -39,7 +46,7 @@ function Participant(id, communicator) {
 		}
 		var text = this.id + ' to MOVE';
 		console.log(consoleColorers[this.id](text));
-		return Promise.resolve('e4').delay(4000 + Math.random()*50);
+		return Promise.resolve('e4').delay(2000 + Math.random()*50);
 	}
 
 	this.msg = function(msg) {
@@ -65,6 +72,29 @@ function Participant(id, communicator) {
 		if (this.timeleft <= 0) {
 			this.timeleft = 0;
 			throw new PlayerFlagged();
+		}
+	}
+
+	this.registerToGame = function(game) {
+		if (!this.game) {
+			this.game = game;
+			return true;
+		}
+		console.log("!!!!!!REGISTER FAIL - ALREADY REGISTERED TO A GAME: " + this.id);
+		return false;
+	}
+
+	this.informAboutCancellation = function() {
+		this.msg({
+			topic: 'gameCancelled',
+			msg: 'Game was cancelled'
+		})
+	}
+
+	this.gameCancelled = function(game) {
+		if (this.game === game) {
+			this.informAboutCancellation();
+			this.game = null;
 		}
 	}
 

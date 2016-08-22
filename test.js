@@ -1,3 +1,5 @@
+var Promise = require('bluebird');
+
 var Participant = require('./Participant');
 var MoveRound   = require('./MoveRound');
 var Transition  = require('./Transition');
@@ -83,13 +85,50 @@ var game = new Game(players, {counter: 0}, [
 ])
 */
 
-var game = new Game(players, {counter: 0}, [
-
-	new MoveRound({timeout: 5500, loop: true}),
+var game = new Game([
+	new MoveRound({timeout: 3500, loop: true}),
 ])
 
-game._start()
+var b = new Participant('B', {});
+
+Promise.try(function() {
+	return game.register([new Participant('A', {}), b])
+})
+.delay(1000)
 .then(function() {
+	return game.register([new Participant('C', {}), b, new Participant('D', {})])
+})
+.delay(500)
+.then(function() {
+	return game.initialWorld({counter: 0})
+})
+.then(function() {
+	return game.cancelGame();
+	return game.start()
+})
+.delay(800)
+.then(function() {
+	return game.register([new Participant('E', {}), new Participant('F', {})])
+})
+.then(game.start.bind(game))
+.then(function(results) {
 	console.log("Game ended");
+	console.log(results)
 	recursiveLog.printTrace();
 })
+
+
+
+/*
+
+IDEAL:
+
+var game = new Game(players, settings, phase);
+game.start()
+.then(function(gameResults) {
+	
+})
+.catch(Error1, function() {})
+.catch(Error2, function() {})
+
+*/
