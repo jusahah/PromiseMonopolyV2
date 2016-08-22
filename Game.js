@@ -43,7 +43,8 @@ Game.prototype.getName = function() {
 	return 'Game';
 }
 
-Game.prototype.start = function() {
+Game.prototype.start = function(initialWorld) {
+	_.assign(this.state, initialWorld);
 	return this._start();
 }
 
@@ -73,18 +74,16 @@ Game.prototype.register = function(players) {
 	return this;
 }
 
-Game.prototype.initialWorld = function(world) {
-	_.assign(this.state, world);
-	return this;
-}
-
-
 /**
 * Start a game
 *
 * @returns Promise
 */
 Game.prototype._start = function() {
+
+	if (this.gameHasStarted) {
+		throw new Error('Game already started');
+	}
 
 	this.gameHasStarted = true;
 

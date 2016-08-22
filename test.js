@@ -100,17 +100,10 @@ Promise.try(function() {
 })
 .delay(500)
 .then(function() {
-	return game.initialWorld({counter: 0})
-})
-.then(function() {
-	return game.cancelGame();
-	return game.start()
+	//return game.cancelGame();
+	return game.start({counter: 0})
 })
 .delay(800)
-.then(function() {
-	return game.register([new Participant('E', {}), new Participant('F', {})])
-})
-.then(game.start.bind(game))
 .then(function(results) {
 	console.log("Game ended");
 	console.log(results)
