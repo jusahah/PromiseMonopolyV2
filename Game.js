@@ -39,6 +39,23 @@ function Game(phases) {
 
 }
 
+Game.prototype.getPlayers = function() {
+	return _.slice(this._startingPlayers);
+}
+
+Game.prototype.getInfo = function() {
+	return {
+		name: 'game_info_test',
+		players: _.map(this._startingPlayers, function(p) {return p.getUserName()});
+	}
+}
+
+Game.prototype.makePublicBroadcast = function(msg) {
+	_.each(this._startingPlayers, function(player) {
+		player.msg(msg);
+	})
+}
+
 Game.prototype.getName = function() {
 	return 'Game';
 }

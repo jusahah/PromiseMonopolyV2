@@ -98,6 +98,10 @@ function Participant(id, communicator) {
 		}
 	}
 
+	this.getUserName = function() {
+		return this.id;
+	}
+
 	setTimeout(function() {
 		return; // Disable by uncommenting
 		console.log("--- DISCONNECT " + this.id + " ---");
