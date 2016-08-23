@@ -145,11 +145,6 @@ Game.prototype._runPhase = function(phase) {
 	.finally(this.onPhaseEnd.bind(this, phase.getName()));
 }
 
-Game.prototype.onRegistration = function(player) {
-	// Throws: 'RejectRegistration', 'AcceptAndStartGame'
-	console.log(chalk.magenta("GAME: onRegistration cb"));
-	//this.actions.acceptAndStartGame()
-}
 
 /**
 * Calls user-specified exit-callback
@@ -159,6 +154,12 @@ Game.prototype.onRegistration = function(player) {
 Game.prototype._exit = function() {
 	// Run onExit callback
 	return this.onExit();
+}
+
+Game.prototype.onRegistration = function(player) {
+	// Throws: 'RejectRegistration', 'AcceptAndStartGame'
+	console.log(chalk.magenta("GAME: onRegistration cb"));
+	//this.actions.acceptAndStartGame()
 }
 
 Game.prototype.onPhaseStart = function(phaseName) {

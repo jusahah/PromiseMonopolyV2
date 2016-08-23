@@ -144,9 +144,9 @@ MoveRound.prototype._askParticipantForMove = function(participant) {
 		participant.substractTime(moveTime); // Throws 'PlayerFlagged' if player oversteps time.
 	})
 	.tap(function(move) {
-
+		var moveMade = move;
 		return Promise.try(function() {
-			return this.checkMoveLegality(move);
+			return this.checkMoveLegality(participant, move);
 		}.bind(this))
 		.then(function(isLegal) {
 			// If not legal, raise 'IllegalMove', somebody will catch it down the drain.
@@ -154,7 +154,9 @@ MoveRound.prototype._askParticipantForMove = function(participant) {
 		}.bind(this))
 	}.bind(this))
 	// Was legal, mutate state based on move
-	.then(this.handleLegalMove.bind(this))
+	.then(function(move) {
+		return this.handleLegalMove(participant, move);
+	}.bind(this))
 	// Errors
 	// If Participant was too slow, we get thrown at us TimeoutError
 	.catch(Promise.TimeoutError, function() {
@@ -165,16 +167,18 @@ MoveRound.prototype._askParticipantForMove = function(participant) {
 				return p === participant
 			});
 		}
-		return this.handleTimeout();
+		return this.handleTimeout(participant);
 	}.bind(this))
 	// Catch player running out of cumulative clock
-	.catch(PlayerFlagged, this.handleFlagFall.bind(this))
+	.catch(PlayerFlagged, this.handleFlagFall.bind(this, participant))
 	// Move was skipped by user code
 	.catch(SkipMove, function() {
 		// Do pretty much nothing
 	})
 	// If Participant made illegal move, we get thrown at us IllegalMove
-	.catch(IllegalMove, this.handleIllegalMove.bind(this)) // Throws 'RetryTurn'
+	.catch(IllegalMove, function() {
+		this.handleIllegalMove(participant, moveMade);
+	}.bind(this)) // Throws 'RetryTurn'
 	// Participant does not continue making moves in case the MoveRound recurses.
 	.catch(NoMoreMovesFromThisParticipant, function() {
 		// Remove Participant from remaining Participants array
@@ -236,7 +240,7 @@ MoveRound.prototype.onExit = function() {
 	console.log(chalk.cyan("onExit cb"));
 }
 
-MoveRound.prototype.onRetryTurn = function() {
+MoveRound.prototype.onRetryTurn = function(participant) {
 	console.log(chalk.cyan("onRetryTurn cb"))
 }
 
@@ -249,7 +253,7 @@ MoveRound.prototype.selectParticipantsForMoveRound = function() {
 }
 
 // Handlers
-MoveRound.prototype.checkMoveLegality = function(move) {
+MoveRound.prototype.checkMoveLegality = function(participant, move) {
 	// Callable actions: 
 	// (none)
 
@@ -257,15 +261,16 @@ MoveRound.prototype.checkMoveLegality = function(move) {
 	return true;
 }
 
-MoveRound.prototype.handleTimeout = function() {
+MoveRound.prototype.handleTimeout = function(participant) {
 	// Callable actions: 
 	// retryTurn, noMoreMovesFromThisParticipant, endMoveRound, endGame, broadcast
 
-	console.log(chalk.blue('handleTimeout'));
+	console.log(chalk.blue('handleTimeout for ' + participant.getUserName()));
+	this.actions.retryTurn();
 
 }
 
-MoveRound.prototype.handleIllegalMove = function() {
+MoveRound.prototype.handleIllegalMove = function(participant, move) {
 	// Callable actions: 
 	// retryTurn, noMoreMovesFromThisParticipant, endMoveRound, endGame, broadcast
 
@@ -273,7 +278,7 @@ MoveRound.prototype.handleIllegalMove = function() {
 	this.actions.retryTurn();
 }
 
-MoveRound.prototype.handleLegalMove = function() {
+MoveRound.prototype.handleLegalMove = function(participant, move) {
 	// Callable actions: 
 	// retryTurn, noMoreMovesFromThisParticipant, endMoveRound, endGame, broadcast
 
@@ -281,12 +286,13 @@ MoveRound.prototype.handleLegalMove = function() {
 	// If dont want to include Participant to a next recursion of MoveRound,
 	// throw "NoMoreMovesFromThisParticipant"
 	this.state.counter++;
-	console.log(chalk.blue('handleLegalMove'));
+	console.log(chalk.blue('handleLegalMove: ' + JSON.stringify(move)));
 	//this.actions.noMoreMovesFromThisParticipant();
 }
 
-MoveRound.prototype.handleFlagFall = function() {
-	console.log("HANDLE FLAG FALL");
+MoveRound.prototype.handleFlagFall = function(participant) {
+	console.log("HANDLE FLAG FALL FOR " + participant.getUserName());
+	this.actions.endMoveRound();
 	this.actions.endGame();
 }
 
