@@ -1,5 +1,6 @@
 var Promise = require('bluebird');
 
+var Lobby       = require('./Lobby');
 var Participant = require('./Participant');
 var MoveRound   = require('./MoveRound');
 var Transition  = require('./Transition');
@@ -85,23 +86,67 @@ var game = new Game(players, {counter: 0}, [
 ])
 */
 
+var lobby = new Lobby();
+
+var pA = new Participant('A', {});
+var pB = new Participant('B', {});
+var pC = new Participant('C', {});
+var pD = new Participant('D', {});
+var pE = new Participant('E', {});
+var pF = new Participant('F', {});
+
+
+
 var game = new Game([
 	new MoveRound({timeout: 3500, loop: true}),
 ])
 
-var b = new Participant('B', {});
-
 Promise.try(function() {
-	return game.register([new Participant('A', {}), b])
+	lobby.playerJoinsLobby(pA);
 })
-.delay(1000)
+.delay(300)
 .then(function() {
-	return game.register([new Participant('C', {}), b, new Participant('D', {})])
+	lobby.playerJoinsLobby(pB);	
+}) 
+.delay(300)
+.then(function() {
+	lobby.addGame(game);	
+}) 
+.delay(300)
+.then(function() {
+	lobby.playerJoinsLobby(pC);	
+}) 
+.delay(300)
+.then(function() {
+	lobby.playerLeavesLobby(pA);	
+}) 
+.delay(300)
+.then(function() {
+	lobby.playerJoinsLobby(pE);	
+}) 
+.delay(300)
+.then(function() {
+	lobby.playerJoinsLobby(pF);	
+}) 
+.delay(300)
+.then(function() {
+	lobby.playerJoinsLobby(pA);	
+}) 
+.delay(300)
+.then(function() {
+	lobby.registerPlayerToGame(pA, game);
+	//return game.register([pA, pB])
+})
+.delay(300)
+.then(function() {
+	lobby.registerPlayerToGame(pB, game);
+	//return game.register([pA, pB])
 })
 .delay(500)
 .then(function() {
+	return lobby.startGame(game, {counter: 0});
 	//return game.cancelGame();
-	return game.start({counter: 0})
+	//return game.start({counter: 0})
 })
 .delay(800)
 .then(function(results) {

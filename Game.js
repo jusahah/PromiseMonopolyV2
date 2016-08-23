@@ -3,8 +3,11 @@ var _ = require('lodash');
 var chalk = require('chalk');
 
 /** Domain exceptions */
+var GameAlreadyStarted = require('./exceptions/GameAlreadyStarted');
 
 /** Domains actions */ 
+var RejectRegistration = require('./actions/RejectRegistration');
+var AcceptAndStartGame = require('./actions/AcceptAndStartGame');
 var EndGame = require('./actions/EndGame')
 
 /** Mixins of Game */
@@ -46,7 +49,7 @@ Game.prototype.getPlayers = function() {
 Game.prototype.getInfo = function() {
 	return {
 		name: 'game_info_test',
-		players: _.map(this._startingPlayers, function(p) {return p.getUserName()});
+		players: _.map(this._startingPlayers, function(p) {return p.getUserName()})
 	}
 }
 
@@ -75,7 +78,7 @@ Game.prototype.cancelGame = function() {
 
 }
 
-Game.prototype.registerPlayer = function(player) {
+Game.prototype._registerPlayer = function(player) {
 	if (player.registerToGame(this)) {
 		// Player is available for registering
 		this.onRegistration(player);
@@ -84,10 +87,11 @@ Game.prototype.registerPlayer = function(player) {
 }
 
 Game.prototype.register = function(players) {
-	if (!this.gameHasStarted) {
-		console.log("Registering players: " + players.length);
-		_.each(players, this.registerPlayer.bind(this));
-	}
+	if (this.gameHasStarted) throw new GameAlreadyStarted();
+
+	console.log("Registering players: " + players.length);
+	_.each(players, this._registerPlayer.bind(this));
+	
 	return this;
 }
 
@@ -99,7 +103,8 @@ Game.prototype.register = function(players) {
 Game.prototype._start = function() {
 
 	if (this.gameHasStarted) {
-		throw new Error('Game already started');
+		// To be caught by the caller of Game.start()
+		throw new GameAlreadyStarted('Game already started');
 	}
 
 	this.gameHasStarted = true;
@@ -143,6 +148,7 @@ Game.prototype._runPhase = function(phase) {
 Game.prototype.onRegistration = function(player) {
 	// Throws: 'RejectRegistration', 'AcceptAndStartGame'
 	console.log(chalk.magenta("GAME: onRegistration cb"));
+	//this.actions.acceptAndStartGame()
 }
 
 /**
