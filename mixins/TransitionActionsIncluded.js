@@ -7,6 +7,13 @@ var EndGame = require('../actions/EndGame');
 function TransitionActionsIncluded(transition) {
 
 	this.actions = {
+
+		setTimesToPlayersClocks: function(newTime) {
+			console.log("RESETTING PLAYER CLOCKS TO: " + newTime);
+			_.each(transition.state.allPlayers, function(player) {
+				player.setGameTime(newTime);
+			});
+		},
 		/**
 		* Ends move round, allowing control to return back to original caller in the chain
 		* Callable from: everywhere

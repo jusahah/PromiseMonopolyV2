@@ -166,7 +166,7 @@ Game.prototype.onPhaseStart = function(phaseName) {
 	console.log(chalk.magenta("GAME: onPhaseStart cb for " + phaseName));
 }
 
-Game.prototype.onPhaseEnd= function(phaseName) {
+Game.prototype.onPhaseEnd = function(phaseName) {
 	//this.actions.endGame();
 	console.log(chalk.magenta("GAME: onPhaseEnd cb for " + phaseName));
 }

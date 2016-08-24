@@ -114,16 +114,18 @@ MoveRound.prototype._roundOfMoves = function() {
 * @throws EndMoveRound
 * @throws EndGame
 */
-MoveRound.prototype._askParticipantForMove = function(participant) {
+MoveRound.prototype._askParticipantForMove = function(participant, isRetry) {
 	//if (participant.hasDisconnected()) return true; // Bail instantly
-	
+	// isRetry === true if this is retry for the move
+	// Problem is that isRetry can also be 0,1,2,3... as Promise.mapSeries passes index
+	isRetry = isRetry === true;
 	// Track player move time
 	var moveRequestSent;
 	
 	// Ask Participant for move and start the promise chain
 	return Promise.try(function() {
 		// Run beforeMove callback
-		return this.beforeMove(participant);
+		return this.beforeMove(participant, isRetry);
 	}.bind(this))
 	.then(function() {
 		moveRequestSent = Date.now();
@@ -167,6 +169,10 @@ MoveRound.prototype._askParticipantForMove = function(participant) {
 				return p === participant
 			});
 		}
+		// Substract time from player's cumulative clock anyway
+		var moveTime = Date.now() - moveRequestSent;
+		participant.substractTime(moveTime);
+
 		return this.handleTimeout(participant);
 	}.bind(this))
 	// Catch player running out of cumulative clock
@@ -192,7 +198,7 @@ MoveRound.prototype._askParticipantForMove = function(participant) {
 		// Run onRetryTurn callback
 		console.log("RETRY TURN CATCH")
 		this.onRetryTurn();
-		return this._askParticipantForMove(participant);
+		return this._askParticipantForMove(participant, true);
 	}.bind(this))
 	// Player has already disconnected
 	.catch(AlreadyDisconnected, function() {
@@ -201,7 +207,11 @@ MoveRound.prototype._askParticipantForMove = function(participant) {
 		});
 	}.bind(this))
 	// Make sure afterMove callback is always run
-	.finally(this.afterMove.bind(this, participant))
+	.finally(function() {
+		if (!isRetry) {
+			this.afterMove(participant);
+		}
+	}.bind(this))
 
 }
 
@@ -292,6 +302,7 @@ MoveRound.prototype.handleLegalMove = function(participant, move) {
 
 MoveRound.prototype.handleFlagFall = function(participant) {
 	console.log("HANDLE FLAG FALL FOR " + participant.getUserName());
+	this.actions.noMoreMovesFromThisParticipant();
 	this.actions.endMoveRound();
 	this.actions.endGame();
 }
@@ -306,10 +317,10 @@ MoveRound.prototype.afterMove = function(participant) {
 	console.log("Moves been made: " + this.state.counter)
 }
 
-MoveRound.prototype.beforeMove = function(participant) {
+MoveRound.prototype.beforeMove = function(participant, isRetry) {
 	// Callable actions: 
 	// skipMove, endMoveRound, endGame, broadcast
-	console.log(chalk.cyan("beforeMove cb"))
+	console.log(chalk.cyan("beforeMove cb retry = " + isRetry))
 
 	if (Math.random() < 0.0001) {
 		console.log("Skipping move!!!!")

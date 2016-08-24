@@ -89,6 +89,7 @@ Transition.prototype.onEnter = function() {
 	recursiveLog.log("TRANSITION " + this._settings.name + ": onEnter ")
 	recursiveLog.push();
 	console.log(chalk.bgWhite.green("TRANSITION " + this._settings.name + ": onEnter cb"));
+	this.actions.setTimesToPlayersClocks(10000);
 	this.actions.broadcast({topic: 'transition', msg: 'Transiting to new app state'});
 }
 

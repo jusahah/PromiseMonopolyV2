@@ -98,8 +98,11 @@ var pF = new Participant('F', {});
 
 
 var game = new Game([
+	new MoveRound({timeout: 1500, loop: true}),
+	new Transition({delay: 5500, loop: false}),
 	new MoveRound({timeout: 3500, loop: true}),
-	new Transition({name: 'results', delay: 1000, loop: true})
+
+	//new Transition({name: 'results', delay: 1000, loop: true})
 ])
 
 Promise.try(function() {

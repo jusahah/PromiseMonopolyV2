@@ -31,7 +31,7 @@ function Participant(id, communicator) {
 	this.disconnected = false;
 
 	// Tracks player's cumulative move clock
-	this.timeleft = 3500;
+	this.timeleft = 6500;
 
 	// Tracks whether player is playing or not
 	this.game;
@@ -46,7 +46,7 @@ function Participant(id, communicator) {
 		}
 		var text = this.id + ' to MOVE';
 		console.log(consoleColorers[this.id](text));
-		return Promise.resolve('e4').delay(2000 + Math.random()*50);
+		return Promise.resolve('e4').delay(1000 + Math.random()*1000);
 	}
 
 	this.msg = function(msg) {
