@@ -2,6 +2,16 @@
 <html>
 <head>
 	<title></title>
+  <style>
+    div.pview {
+      height: 180px;
+      width: 180px;
+      margin: 10px;
+      display: inline-block;
+      background-color: #eeffcc;
+
+    }
+  </style>
 </head>
 <body>
 
@@ -17,7 +27,23 @@
 
 <button id="createplayer">Create Player</button>
 
+<script id="pview-template" type="text/x-handlebars-template">
+  <div class="pview" id="view_{{playerID}}">
+
+    <h3>{{playerID}}</h3>
+    <p id="msgtopic"></p>
+
+    <button class="register">Register</button>
+    <button class="legalmove">Legal Move</button>
+    <button class="illegalmove">Illegal Move</button>
+
+  </div>
+</script>
 <script   src="https://code.jquery.com/jquery-3.1.0.min.js"   integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s="   crossorigin="anonymous"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.5/handlebars.min.js"></script>
+
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.8/socket.io.min.js"></script>
 <script>
   var msgReceivers = {};
@@ -56,7 +82,12 @@
 
   function createPlayerView(playerID) {
   	// Use Handlebars a bit later to create player view
-  	$('#playerviews').append('<p id="view_' + playerID + '"> Player view: ' + playerID + '</p>');
+    var source   = $('#pview-template').html();
+    // Should probably move this to a place where its not recompiled everytime
+    console.log(Handlebars);
+    var template = Handlebars.compile(source);
+    var html  = template({playerID: playerID});
+  	$('#playerviews').append(html);
   }
 
   function handleMsgToPlayer(playerID, msg) {
@@ -69,9 +100,9 @@
   	return function(msg) {
   		console.warn(playerID + ": Incoming msg of topic " + msg.topic)
   		if (msg.topic === 'makeMove') {
-  			$('#view_' + playerID).empty().append("Make a move!");
+  			$('#view_' + playerID).find('#msgtopic').empty().append("Make a move!");
   		} else {
-  			$('#view_' + playerID).empty().append(JSON.stringify(msg));
+  			$('#view_' + playerID).find('#msgtopic').empty().append(msg.topic);
   		}
 
   	}
