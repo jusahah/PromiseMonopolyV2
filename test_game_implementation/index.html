@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title></title>
+</head>
+<body>
+
+<div id="area">
+	
+	<div id="playerlist">
+
+	</div>
+
+	<div id="playerviews">
+	</div>
+</div>
+
+<button id="createplayer">Create Player</button>
+
+<script   src="https://code.jquery.com/jquery-3.1.0.min.js"   integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s="   crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.8/socket.io.min.js"></script>
+<script>
+  var msgReceivers = {};
+  var socket = io('http://localhost:8080');
+  socket.on('news', function (data) {
+    console.log(data);
+    socket.emit('my other event', { my: 'data' });
+  });
+
+  socket.on('user_created', function(data) {
+  	var playerID = data.id;
+  	$('#playerlist').append("Player: " + playerID);
+  	msgReceivers[playerID] = createMsgReceiverForPlayer(playerID);
+  	createPlayerView(playerID);
+  })
+
+  socket.on('msg', function(msg) {
+  	var playerID = msg.toplayer;
+  	handleMsgToPlayer(playerID, msg);
+  })
+
+  // Click listeners
+  $('#createplayer').on('click', createPlayer);
+
+  // Player controls
+  $('#playerviews').on('click', function(e) {
+  	var target = $(e.target);
+  	// Resolve which player view had the click occur
+  	// Resolve which button type was clicked
+  })
+
+  function createPlayer() {
+  	socket.emit('user_create', {});
+
+  }  
+
+  function createPlayerView(playerID) {
+  	// Use Handlebars a bit later to create player view
+  	$('#playerviews').append('<p id="view_' + playerID + '"> Player view: ' + playerID + '</p>');
+  }
+
+  function handleMsgToPlayer(playerID, msg) {
+  	if (msgReceivers.hasOwnProperty(playerID)) {
+  		msgReceivers[playerID](msg);
+  	}
+  }
+
+  function createMsgReceiverForPlayer(playerID) {
+  	return function(msg) {
+  		console.warn(playerID + ": Incoming msg of topic " + msg.topic)
+  		if (msg.topic === 'makeMove') {
+  			$('#view_' + playerID).empty().append("Make a move!");
+  		} else {
+  			$('#view_' + playerID).empty().append(JSON.stringify(msg));
+  		}
+
+  	}
+  }
+
+
+</script>
+</body>
+</html>
+
